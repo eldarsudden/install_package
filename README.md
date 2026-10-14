@@ -6,7 +6,7 @@ Ansible role for RPM deployment to RHEL-family distributions, without hard-coded
 
 | Variable | Default | Description |
 |---|---|---|
-| `packages` | `null` | List of names or package objects; the role loops internally. `null` uses the single-package variables below; `[]` does nothing |
+| `packages` | See list below | List of names or package objects; the role loops internally. `null` uses the single-package variables below; `[]` does nothing |
 | `package_source` | `repo` | `repo`, `local`, or `url` |
 | `package_name` | `""` | Package name (required for repo/removal) |
 | `package_version` | `""` | Optional repository package version/release |
@@ -18,6 +18,25 @@ Ansible role for RPM deployment to RHEL-family distributions, without hard-coded
 | `package_tmp_dir` | `/var/tmp/ansible-packages` | Remote RPM staging directory |
 | `package_validate_certs` | `true` | TLS certificate verification |
 | `package_checksum` | `""` | Optional get_url checksum, e.g. `sha256:...` |
+
+By default, the role installs these repository packages:
+
+```yaml
+packages:
+  - bash-completion
+  - net-tools
+  - bind-utils
+  - sysstat
+  - strace
+  - vim
+  - lsof
+  - unzip
+  - bc
+  - tree
+  - git
+```
+
+An inventory `packages` list replaces this default list. Set `packages: null` to configure a single package through `package_*` variables, as shown below.
 
 Package objects use `name`, `version`, `state`, `source`, `local_path`, `url`, `url_username`, `url_password`, `tmp_dir`, `validate_certs`, and `checksum`. Omitted fields inherit the corresponding `package_*` variable. A string entry is equivalent to `{name: <string>}`.
 
@@ -33,6 +52,7 @@ All examples use `hosts: rhel_servers`, `become: true`, and facts gathering.
   roles:
     - role: install_package
       vars:
+        packages: null
         package_source: repo
         package_name: nginx
         package_state: present
@@ -46,6 +66,7 @@ All examples use `hosts: rhel_servers`, `become: true`, and facts gathering.
   roles:
     - role: install_package
       vars:
+        packages: null
         package_source: repo
         package_name: nginx
         package_version: '1.24.0-1.el9' # example only; must exist in repo
@@ -59,6 +80,7 @@ All examples use `hosts: rhel_servers`, `become: true`, and facts gathering.
   roles:
     - role: install_package
       vars:
+        packages: null
         package_name: nginx
         package_state: latest
 ```
@@ -71,6 +93,7 @@ All examples use `hosts: rhel_servers`, `become: true`, and facts gathering.
   roles:
     - role: install_package
       vars:
+        packages: null
         package_source: local
         package_local_path: files/myapp-1.0.0.x86_64.rpm
 ```
@@ -83,6 +106,7 @@ All examples use `hosts: rhel_servers`, `become: true`, and facts gathering.
   roles:
     - role: install_package
       vars:
+        packages: null
         package_source: url
         package_url: https://nexus.example.com/repository/rpm/myapp.rpm
 ```
@@ -95,6 +119,7 @@ All examples use `hosts: rhel_servers`, `become: true`, and facts gathering.
   roles:
     - role: install_package
       vars:
+        packages: null
         package_source: url
         package_url: https://nexus.example.com/repository/rpm/myapp.rpm
         package_url_username: "{{ nexus_user }}"
@@ -111,6 +136,7 @@ Store credentials in Ansible Vault or a secrets manager. A username with an empt
   roles:
     - role: install_package
       vars:
+        packages: null
         package_source: url
         package_url: https://artifactory.example.com/artifactory/rpm-local/myapp.rpm
 ```
@@ -123,6 +149,7 @@ Store credentials in Ansible Vault or a secrets manager. A username with an empt
   roles:
     - role: install_package
       vars:
+        packages: null
         package_source: url
         package_url: https://nexus.example.com/repository/rpm/myapp.rpm
         package_checksum: 'sha256:REPLACE_WITH_ACTUAL_SHA256'
@@ -136,6 +163,7 @@ Store credentials in Ansible Vault or a secrets manager. A username with an empt
   roles:
     - role: install_package
       vars:
+        packages: null
         package_name: myapp
         package_state: absent
 ```

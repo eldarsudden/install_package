@@ -1,5 +1,16 @@
 ---
-packages: null
+packages:
+  - bash-completion
+  - net-tools
+  - bind-utils
+  - sysstat
+  - strace
+  - vim
+  - lsof
+  - unzip
+  - bc
+  - tree
+  - git
 package_name: ""
 package_version: ""
 package_state: present
