@@ -1,5 +1,5 @@
 ---
-packages:
+packages_defaults:
   - bash-completion
   - net-tools
   - bind-utils
@@ -11,6 +11,8 @@ packages:
   - bc
   - tree
   - git
+packages: "{{ packages_defaults }}"
+packages_merge_defaults: false
 package_name: ""
 package_version: ""
 package_state: present

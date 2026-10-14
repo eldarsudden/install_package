@@ -1,21 +1,45 @@
 ---
-- name: Validate package list
+- name: Validate package lists and merge option
   ansible.builtin.assert:
     that:
       - >-
         packages is none or
         (packages is sequence and packages is not string and packages is not mapping)
-    fail_msg: packages must be a list of package names or mappings, or null
+      - packages_defaults is sequence and packages_defaults is not string and packages_defaults is not mapping
+      - packages_merge_defaults | type_debug == 'bool'
+    fail_msg: packages and packages_defaults must be lists (packages may be null), and packages_merge_defaults must be a boolean
 
 - name: Manage packages
   ansible.builtin.include_tasks: package.yml
-  loop: "{{ packages if packages is not none else [{}] }}"
+  loop: "{{ _packages_to_manage }}"
   loop_control:
     loop_var: _install_package_item
     label: >-
       {{ _install_package_item.name | default('package')
          if _install_package_item is mapping else _install_package_item }}
   vars:
+    _packages_to_manage: >-
+      {%- if packages is none -%}
+      {{ [{}] }}
+      {%- elif not packages_merge_defaults -%}
+      {{ packages }}
+      {%- else -%}
+      {%- set names = [] -%}
+      {%- for entry in packages -%}
+      {%- set name = entry.name | default(none) if entry is mapping else entry -%}
+      {%- if name is not none -%}
+      {%- set _ = names.append(name) -%}
+      {%- endif -%}
+      {%- endfor -%}
+      {%- set base = [] -%}
+      {%- for entry in packages_defaults -%}
+      {%- set name = entry.name | default(none) if entry is mapping else entry -%}
+      {%- if name is none or name not in names -%}
+      {%- set _ = base.append(entry) -%}
+      {%- endif -%}
+      {%- endfor -%}
+      {{ base + packages }}
+      {%- endif -%}
     _package: >-
       {{ {
            'name': package_name,

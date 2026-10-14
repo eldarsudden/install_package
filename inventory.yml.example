@@ -5,8 +5,11 @@ all:
       hosts:
         server01.example.com:
       vars:
+        packages_merge_defaults: false # true: add this list to packages_defaults
         packages:
-          - nginx
+          - name: nginx
+            version: '1.24.0-1.el9' # example only; must exist in an enabled repo
+            state: present
           - curl
           - name: vim-enhanced
             state: latest

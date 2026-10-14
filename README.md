@@ -6,7 +6,9 @@ Ansible role for RPM deployment to RHEL-family distributions, without hard-coded
 
 | Variable | Default | Description |
 |---|---|---|
-| `packages` | See list below | List of names or package objects; the role loops internally. `null` uses the single-package variables below; `[]` does nothing |
+| `packages_defaults` | See list below | Base package list used when inventory does not specify `packages`, and when merging is enabled |
+| `packages` | `"{{ packages_defaults }}"` | List of names or package objects; the role loops internally. `null` uses the single-package variables below |
+| `packages_merge_defaults` | `false` | `false`: replace the base list with `packages`; `true`: merge the base list with `packages` |
 | `package_source` | `repo` | `repo`, `local`, or `url` |
 | `package_name` | `""` | Package name (required for repo/removal) |
 | `package_version` | `""` | Optional repository package version/release |
@@ -22,7 +24,7 @@ Ansible role for RPM deployment to RHEL-family distributions, without hard-coded
 By default, the role installs these repository packages:
 
 ```yaml
-packages:
+packages_defaults:
   - bash-completion
   - net-tools
   - bind-utils
@@ -36,137 +38,15 @@ packages:
   - git
 ```
 
-An inventory `packages` list replaces this default list. Set `packages: null` to configure a single package through `package_*` variables, as shown below.
+An inventory `packages` list replaces this default list unless `packages_merge_defaults: true` is set. In merge mode, named inventory entries replace base entries with the same name, including their version and state, so each overridden base package is processed once. Other base entries run first, followed by the inventory list in its original order. Omitted object fields still inherit the corresponding `package_*` variable.
+
+With `packages: []`, replacement mode does nothing; merge mode installs only the base list. `packages: null` uses the single-package `package_*` variables regardless of the merge option.
 
 Package objects use `name`, `version`, `state`, `source`, `local_path`, `url`, `url_username`, `url_password`, `tmp_dir`, `validate_certs`, and `checksum`. Omitted fields inherit the corresponding `package_*` variable. A string entry is equivalent to `{name: <string>}`.
 
 ## Usage
 
 All examples use `hosts: rhel_servers`, `become: true`, and facts gathering.
-
-### Repository
-
-```yaml
-- hosts: rhel_servers
-  become: true
-  roles:
-    - role: install_package
-      vars:
-        packages: null
-        package_source: repo
-        package_name: nginx
-        package_state: present
-```
-
-### Repository: pinned version
-
-```yaml
-- hosts: rhel_servers
-  become: true
-  roles:
-    - role: install_package
-      vars:
-        packages: null
-        package_source: repo
-        package_name: nginx
-        package_version: '1.24.0-1.el9' # example only; must exist in repo
-```
-
-### Repository: latest version
-
-```yaml
-- hosts: rhel_servers
-  become: true
-  roles:
-    - role: install_package
-      vars:
-        packages: null
-        package_name: nginx
-        package_state: latest
-```
-
-### Local RPM on controller
-
-```yaml
-- hosts: rhel_servers
-  become: true
-  roles:
-    - role: install_package
-      vars:
-        packages: null
-        package_source: local
-        package_local_path: files/myapp-1.0.0.x86_64.rpm
-```
-
-### Public Nexus / direct URL (no password)
-
-```yaml
-- hosts: rhel_servers
-  become: true
-  roles:
-    - role: install_package
-      vars:
-        packages: null
-        package_source: url
-        package_url: https://nexus.example.com/repository/rpm/myapp.rpm
-```
-
-### Private Nexus with Basic authentication
-
-```yaml
-- hosts: rhel_servers
-  become: true
-  roles:
-    - role: install_package
-      vars:
-        packages: null
-        package_source: url
-        package_url: https://nexus.example.com/repository/rpm/myapp.rpm
-        package_url_username: "{{ nexus_user }}"
-        package_url_password: "{{ nexus_password }}"
-```
-
-Store credentials in Ansible Vault or a secrets manager. A username with an empty password is permitted; a password without a username is rejected.
-
-### Artifactory
-
-```yaml
-- hosts: rhel_servers
-  become: true
-  roles:
-    - role: install_package
-      vars:
-        packages: null
-        package_source: url
-        package_url: https://artifactory.example.com/artifactory/rpm-local/myapp.rpm
-```
-
-### URL with SHA256 verification
-
-```yaml
-- hosts: rhel_servers
-  become: true
-  roles:
-    - role: install_package
-      vars:
-        packages: null
-        package_source: url
-        package_url: https://nexus.example.com/repository/rpm/myapp.rpm
-        package_checksum: 'sha256:REPLACE_WITH_ACTUAL_SHA256'
-```
-
-### Remove package (all sources)
-
-```yaml
-- hosts: rhel_servers
-  become: true
-  roles:
-    - role: install_package
-      vars:
-        packages: null
-        package_name: myapp
-        package_state: absent
-```
 
 ### YAML inventory: package list for a group
 
@@ -180,6 +60,7 @@ all:
         server01.example.com:
         server02.example.com:
       vars:
+        packages_merge_defaults: false
         package_source: repo
         packages:
           - nginx
@@ -203,9 +84,60 @@ The existing `deploy.yml` calls the role once and takes its configuration from i
 ansible-playbook -i inventory.yml deploy.yml
 ```
 
+### YAML inventory: merge with the default package list
+
+Set `packages_merge_defaults: true` to keep the base packages and add inventory packages. This example adds `curl` and pinned `nginx`, and changes the base `vim` entry to `latest` without installing it twice. The playbook remains the same.
+
+```yaml
+all:
+  children:
+    rhel_servers:
+      hosts:
+        server01.example.com:
+      vars:
+        packages_merge_defaults: true
+        packages:
+          - curl
+          - name: nginx
+            version: '1.24.0-1.el9' # example only; must exist in an enabled repo
+            state: present
+          - name: vim
+            state: latest
+```
+
+```bash
+ansible-playbook -i inventory.yml deploy.yml
+```
+
+### YAML inventory: package list with a pinned version
+
+This example installs `curl` and `vim-enhanced` alongside a specific version of `nginx`. Save it as `inventory.yml`, or copy `inventory.yml.example` and adjust the host and version.
+
+```yaml
+all:
+  children:
+    rhel_servers:
+      hosts:
+        server01.example.com:
+      vars:
+        packages:
+          - name: nginx
+            version: '1.24.0-1.el9' # example only; must exist in an enabled repo
+            state: present
+          - curl
+          - name: vim-enhanced
+            state: latest
+```
+
+The role passes `nginx-1.24.0-1.el9` to the package manager. Use `state: present` for the pinned entry; leave `version` unset for packages without a version pin. The role loops over the list internally.
+
+```bash
+ansible-playbook -i inventory.yml deploy.yml
+```
+
 ### YAML inventory: individual package versions and states
 
-For separate settings per package, define a list of objects in `inventory.yml`. Use the same `deploy.yml`; the loop remains inside the role. Group variables provide the default list; a host-level list replaces it for that host (lists are not combined).
+For separate settings per package, define a list of objects in `inventory.yml`. Use the same `deploy.yml`; the loop remains inside the role. A host-level `packages` list replaces the group-level `packages` list. The merge option combines the resulting inventory list with `packages_defaults`; it does not merge host and group lists.
 
 ```yaml
 all:
