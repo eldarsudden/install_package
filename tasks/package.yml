@@ -1,0 +1,38 @@
+---
+- name: Validate package entry
+  ansible.builtin.assert:
+    that:
+      - _install_package_item is string or _install_package_item is mapping
+    fail_msg: Each packages entry must be a package name or mapping
+  no_log: true
+
+- name: Validate operating system and inputs
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['os_family'] == 'RedHat'
+      - _package.source in ['repo', 'local', 'url']
+      - _package.state in ['present', 'latest', 'absent']
+      - >-
+        _package.source != 'url' or
+        ((_package.url_username | length == 0) ==
+         (_package.url_password | length == 0))
+    fail_msg: Invalid platform or package configuration
+  no_log: true
+
+- name: Remove package by name
+  ansible.builtin.package:
+    name: "{{ _package.name }}"
+    state: absent
+  when:
+    - _package.state == 'absent'
+    - _package.name | length > 0
+
+- name: Require package name for removal
+  ansible.builtin.assert:
+    that: _package.name | length > 0
+    fail_msg: package name is required for removal
+  when: _package.state == 'absent'
+
+- name: Install from selected source
+  ansible.builtin.include_tasks: "{{ _package.source }}.yml"
+  when: _package.state != 'absent'

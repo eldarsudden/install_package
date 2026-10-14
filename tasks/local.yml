@@ -1,0 +1,21 @@
+---
+- name: Require local RPM path
+  ansible.builtin.assert:
+    that: _package.local_path | length > 0
+
+- name: Create temporary directory
+  ansible.builtin.file:
+    path: "{{ _package.tmp_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Copy RPM from controller
+  ansible.builtin.copy:
+    src: "{{ _package.local_path }}"
+    dest: "{{ _package.tmp_dir }}/{{ _package.local_path | basename }}"
+    mode: '0644'
+
+- name: Install local RPM
+  ansible.builtin.package:
+    name: "{{ _package.tmp_dir }}/{{ _package.local_path | basename }}"
+    state: present

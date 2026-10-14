@@ -1,0 +1,6 @@
+---
+galaxy_info:
+  author: devops
+  description: Install RPM packages on RHEL-like systems from repo, controller or URL
+  min_ansible_version: '2.10'
+dependencies: []

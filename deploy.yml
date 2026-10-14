@@ -1,0 +1,7 @@
+---
+- name: Manage RPM packages
+  hosts: rhel_servers
+  become: true
+  gather_facts: true
+  roles:
+    - role: install_package

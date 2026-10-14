@@ -1,0 +1,13 @@
+---
+packages: null
+package_name: ""
+package_version: ""
+package_state: present
+package_source: repo
+package_local_path: ""
+package_url: ""
+package_url_username: ""
+package_url_password: ""
+package_tmp_dir: /var/tmp/ansible-packages
+package_validate_certs: true
+package_checksum: ""

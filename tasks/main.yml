@@ -1,0 +1,33 @@
+---
+- name: Validate package list
+  ansible.builtin.assert:
+    that:
+      - >-
+        packages is none or
+        (packages is sequence and packages is not string and packages is not mapping)
+    fail_msg: packages must be a list of package names or mappings, or null
+
+- name: Manage packages
+  ansible.builtin.include_tasks: package.yml
+  loop: "{{ packages if packages is not none else [{}] }}"
+  loop_control:
+    loop_var: _install_package_item
+    label: >-
+      {{ _install_package_item.name | default('package')
+         if _install_package_item is mapping else _install_package_item }}
+  vars:
+    _package: >-
+      {{ {
+           'name': package_name,
+           'version': package_version,
+           'state': package_state,
+           'source': package_source,
+           'local_path': package_local_path,
+           'url': package_url,
+           'url_username': package_url_username,
+           'url_password': package_url_password,
+           'tmp_dir': package_tmp_dir,
+           'validate_certs': package_validate_certs,
+           'checksum': package_checksum
+         } | combine(_install_package_item if _install_package_item is mapping
+                     else {'name': _install_package_item}) }}

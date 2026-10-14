@@ -1,0 +1,12 @@
+---
+all:
+  children:
+    rhel_servers:
+      hosts:
+        server01.example.com:
+      vars:
+        packages:
+          - nginx
+          - curl
+          - name: vim-enhanced
+            state: latest

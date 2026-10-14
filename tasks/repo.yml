@@ -1,0 +1,9 @@
+---
+- name: Require repository package name
+  ansible.builtin.assert:
+    that: _package.name | length > 0
+
+- name: Install package from repository
+  ansible.builtin.package:
+    name: "{{ _package.name ~ '-' ~ _package.version if _package.version | length > 0 else _package.name }}"
+    state: "{{ _package.state }}"

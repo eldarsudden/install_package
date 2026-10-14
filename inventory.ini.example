@@ -1,0 +1,5 @@
+[rhel_servers]
+server01.example.com
+
+[rhel_servers:vars]
+package_name=nginx

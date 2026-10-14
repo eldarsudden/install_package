@@ -1,0 +1,29 @@
+---
+- name: Require RPM URL
+  ansible.builtin.assert:
+    that:
+      - _package.url | length > 0
+      - _package.url is match('^https?://')
+
+- name: Create temporary directory
+  ansible.builtin.file:
+    path: "{{ _package.tmp_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Download RPM
+  ansible.builtin.get_url:
+    url: "{{ _package.url }}"
+    dest: "{{ _package.tmp_dir }}/package.rpm"
+    url_username: "{{ _package.url_username if _package.url_username | length > 0 else omit }}"
+    url_password: "{{ _package.url_password if _package.url_password | length > 0 else omit }}"
+    force_basic_auth: "{{ _package.url_username | length > 0 }}"
+    validate_certs: "{{ _package.validate_certs }}"
+    checksum: "{{ _package.checksum if _package.checksum | length > 0 else omit }}"
+    mode: '0644'
+  no_log: true
+
+- name: Install downloaded RPM
+  ansible.builtin.package:
+    name: "{{ _package.tmp_dir }}/package.rpm"
+    state: present
