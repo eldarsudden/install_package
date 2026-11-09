@@ -22,8 +22,17 @@
     checksum: "{{ _package.checksum if _package.checksum | length > 0 else omit }}"
     mode: '0644'
   no_log: true
+  when: not ansible_check_mode
 
 - name: Install downloaded RPM
   ansible.builtin.package:
     name: "{{ _package.tmp_dir }}/package.rpm"
     state: present
+  when: not ansible_check_mode
+
+- name: Explain URL package check mode
+  ansible.builtin.debug:
+    msg: >-
+      Check mode skips RPM downloads and URL package installation.
+      Run without --check to download and install the RPM.
+  when: ansible_check_mode

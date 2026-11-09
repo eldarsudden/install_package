@@ -228,9 +228,20 @@ Leave both credentials empty for anonymous access, or supply both for HTTP Basic
 
 ## Operational notes
 
+- With `--check`, URL package settings are validated and staging directory creation is previewed, but RPM downloads and URL package installation are skipped with an explanatory message. This does not verify URL access, RPM contents, or dependencies. Run without `--check` to download and install the RPM.
 - Package operations use `ansible.builtin.package`; RPM path support and dependency resolution depend on the selected DNF/YUM backend.
 - `latest` applies to repository installs. Local and URL RPM installs always use `present`; `version` is used only for repository installs.
 - Local RPMs are staged under their original filename. URL RPMs are staged as `package.rpm` in the selected `tmp_dir`; sequential URL entries using the same directory reuse that path.
 - Staged RPM files remain on the managed host after installation.
 - TLS verification is enabled by default. Keep it enabled for HTTPS downloads.
 - The role does not configure package repositories, perform a separate RPM GPG signature verification step, or manage services.
+
+## Tests
+
+With Ansible installed, run:
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+The tests use a local HTTP server to verify downloads and check-mode behavior with missing and existing staging directories. They do not install RPM packages or require a RHEL host.
