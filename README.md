@@ -121,6 +121,7 @@ Each package object can override these settings using the field in the second co
 | `package_url_password` | `url_password` | `""` | HTTP Basic Auth password; supply with the username. |
 | `package_tmp_dir` | `tmp_dir` | `/var/tmp/ansible-packages` | Staging directory on the managed host. |
 | `package_validate_certs` | `validate_certs` | `true` | Verify TLS certificates for URL downloads. |
+| `package_disable_gpg_check` | `disable_gpg_check` | `false` | Disable GPG signature checks for the DNF transaction when installing a URL RPM, including dependencies. |
 | `package_checksum` | `checksum` | `""` | Optional `get_url` checksum, such as `sha256:<digest>`; applies to URL downloads. |
 
 ## Examples
@@ -191,6 +192,17 @@ packages:
 
 Local and URL installs do not require `name`. Removal always requires the installed package name and skips copying or downloading an RPM.
 
+To disable GPG signature checks for a URL RPM and its dependencies, opt in on that entry:
+
+```yaml
+packages:
+  - source: url
+    url: https://nexus.example.com/repository/rpm/agent.rpm
+    disable_gpg_check: true
+```
+
+Alternatively, set `package_disable_gpg_check: true` as the default for URL entries. GPG checking is enabled by default. `validate_certs` controls HTTPS certificate verification separately.
+
 ### Manage one package
 
 Set `packages: null` explicitly to use only the single-package variables:
@@ -229,7 +241,7 @@ Leave both credentials empty for anonymous access, or supply both for HTTP Basic
 ## Operational notes
 
 - With `--check`, URL package settings are validated and staging directory creation is previewed, but RPM downloads and URL package installation are skipped with an explanatory message. This does not verify URL access, RPM contents, or dependencies. Run without `--check` to download and install the RPM.
-- Package operations use `ansible.builtin.package`; RPM path support and dependency resolution depend on the selected DNF/YUM backend.
+- Repository and local package operations use `ansible.builtin.package`; URL RPM installation uses `ansible.builtin.dnf`. RPM path support and dependency resolution depend on the package manager.
 - `latest` applies to repository installs. Local and URL RPM installs always use `present`; `version` is used only for repository installs.
 - Local RPMs are staged under their original filename. URL RPMs are staged as `package.rpm` in the selected `tmp_dir`; sequential URL entries using the same directory reuse that path.
 - Staged RPM files remain on the managed host after installation.

@@ -23,4 +23,5 @@ package_url_username: ""
 package_url_password: ""
 package_tmp_dir: /var/tmp/ansible-packages
 package_validate_certs: true
+package_disable_gpg_check: false
 package_checksum: ""

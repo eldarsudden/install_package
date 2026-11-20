@@ -25,9 +25,10 @@
   when: not ansible_check_mode
 
 - name: Install downloaded RPM
-  ansible.builtin.package:
+  ansible.builtin.dnf:
     name: "{{ _package.tmp_dir }}/package.rpm"
     state: present
+    disable_gpg_check: "{{ _package.disable_gpg_check }}"
   when: not ansible_check_mode
 
 - name: Explain URL package check mode

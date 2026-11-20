@@ -52,6 +52,7 @@
            'url_password': package_url_password,
            'tmp_dir': package_tmp_dir,
            'validate_certs': package_validate_certs,
+           'disable_gpg_check': package_disable_gpg_check,
            'checksum': package_checksum
          } | combine(_install_package_item if _install_package_item is mapping
                      else {'name': _install_package_item}) }}
