@@ -99,7 +99,7 @@ class URLPackageTests(unittest.TestCase):
         # Exercise the real download tasks without installing a package on the controller.
         tasks = yaml.safe_load((ROLE / "tasks/url.yml").read_text())
         install = next(i for i, task in enumerate(tasks)
-                       if "ansible.builtin.package" in task)
+                       if "ansible.builtin.dnf" in task)
         defaults = yaml.safe_load((ROLE / "defaults/main.yml").read_text())
         settings = {key[len("package_"):]: value for key, value in defaults.items()
                     if key.startswith("package_")}
